@@ -60,6 +60,16 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Admin Dashboard Setup
+
+Set the API base URL for the Jarvis Admin API:
+
+```sh
+VITE_ADMIN_API_URL=http://localhost:8000
+```
+
+When you open the dashboard, you will be prompted for `ADMIN_TOKEN` and it will be stored in localStorage.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

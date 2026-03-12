@@ -51,3 +51,14 @@ export async function searchMemory(userId: string, query: string, topK: number) 
   });
   return apiFetch(`/admin/memory/${encodeURIComponent(userId)}?${params.toString()}`);
 }
+
+export async function sendChat(message: string, userId?: string, history?: string[]) {
+  return apiFetch("/admin/chat", {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      user_id: userId || null,
+      history: history || null,
+    }),
+  });
+}

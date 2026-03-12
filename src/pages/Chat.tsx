@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { agents } from "@/data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { sendChat } from "@/services/api";
 
 interface Message {
   id: string;
@@ -80,7 +81,7 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
 
@@ -97,17 +98,42 @@ export default function Chat() {
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      const response = isCmd ? processCommand(text) : generateResponse(text);
+    try {
+      let response = "";
+      if (isCmd) {
+        response = processCommand(text) || "I didn't recognize that command. Try `/help`.";
+      } else {
+        const history = messages
+          .slice(-20)
+          .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`);
+        history.push(`User: ${text}`);
+
+        const apiResult = await sendChat(text, "dashboard", history);
+        response = apiResult?.response || "";
+        if (!response) {
+          response = generateResponse(text);
+        }
+      }
+
       const jarvisMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "jarvis",
-        content: response || "I didn't recognize that command. Try `/help`.",
+        content: response,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, jarvisMsg]);
+    } catch {
+      const fallback = generateResponse(text);
+      const jarvisMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "jarvis",
+        content: `${fallback}\n\n_(Local fallback: couldn't reach Admin API. Is it running at VITE_ADMIN_API_URL and did you enter ADMIN_TOKEN?)_`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, jarvisMsg]);
+    } finally {
       setIsTyping(false);
-    }, 600 + Math.random() * 800);
+    }
   };
 
   return (
